@@ -1,15 +1,21 @@
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { runQuarto } from '../../src/shell/exec.ts';
 import { hasQuarto } from '../support/quarto.ts';
 
-const options = async () => ({
-	cwd: await mkdtemp(path.join(os.tmpdir(), 'quarto-mcp-exec-')),
-	timeoutMs: 60_000,
-	maxOutputBytes: 1_048_576,
+const dirs: string[] = [];
+
+afterEach(async () => {
+	await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
+
+const options = async () => {
+	const cwd = await mkdtemp(path.join(os.tmpdir(), 'quarto-mcp-exec-'));
+	dirs.push(cwd);
+	return { cwd, timeoutMs: 60_000, maxOutputBytes: 1_048_576 };
+};
 
 describe.skipIf(!hasQuarto)('runQuarto', () => {
 	it('returns code 0 and the version on stdout', async () => {
