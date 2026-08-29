@@ -1,0 +1,40 @@
+name: Bug report
+description: Report incorrect behavior in the MCP server.
+labels: ['bug']
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Describe the incorrect behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: Quote the rule in SPECS.md when one applies.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Give the tool call and its arguments.
+      render: json
+    validations:
+      required: true
+  - type: input
+    id: quarto-version
+    attributes:
+      label: Quarto version
+      description: The output of `quarto --version`.
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      description: The output of `node --version`.
+    validations:
+      required: true
