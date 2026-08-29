@@ -9,9 +9,6 @@ permissions:
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
-    # This action needs the dependency graph. A private repository needs GitHub Advanced
-    # Security for that. Run it only when the repository is public.
-    if: github.event.repository.visibility == 'public'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
