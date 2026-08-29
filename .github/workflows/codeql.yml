@@ -15,6 +15,9 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    # Uploading results needs code scanning. A private repository needs GitHub Advanced
+    # Security for that. Run this only when the repository is public.
+    if: github.event.repository.visibility == 'public'
     permissions:
       security-events: write
       actions: read

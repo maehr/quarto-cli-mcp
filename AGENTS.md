@@ -282,6 +282,17 @@ Use these defaults:
 
 CI and local hooks must use the same quality gate.
 
+### Advanced Security Limit
+
+This repository is private and does not have GitHub Advanced Security. Secret scanning, code
+scanning, and dependency review are therefore unavailable.
+
+The CodeQL and dependency review workflows are present. Both carry an
+`if: github.event.repository.visibility == 'public'` guard. They start to run when the
+repository becomes public. Do not delete them.
+
+Branch protection requires only the `quality-gate` check.
+
 
 ## 7. Security Model
 

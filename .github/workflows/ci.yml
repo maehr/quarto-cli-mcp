@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality-gate:
-    name: quality-gate
+  test:
+    name: test (node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -49,3 +49,21 @@ jobs:
 
       - name: Build
         run: pnpm run build
+
+  # A matrix job reports one check per combination, so its name is never stable.
+  # Branch protection requires this single job instead.
+  quality-gate:
+    name: quality-gate
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always()
+    steps:
+      - name: Check the matrix result
+        env:
+          RESULT: ${{ needs.test.result }}
+        run: |
+          if [ "$RESULT" != "success" ]; then
+            echo "The test matrix reported '$RESULT'."
+            exit 1
+          fi
+          echo "The test matrix passed."
