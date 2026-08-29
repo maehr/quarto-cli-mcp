@@ -22,6 +22,43 @@ Read [`SPECS.md`](SPECS.md) for the full contract.
 - Node.js 22 or later
 - [Quarto](https://quarto.org/docs/get-started/) on `PATH`
 
+## Install
+
+```bash
+pnpm install
+pnpm run build
+```
+
+## Use
+
+The server speaks MCP over stdio. Add it to a client configuration:
+
+```json
+{
+  "mcpServers": {
+    "quarto": {
+      "command": "node",
+      "args": ["/absolute/path/to/quarto-cli-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+A `projectId` is valid only while the server process runs. The server removes every temporary
+project when it stops.
+
+### Server limits
+
+Set these environment variables to change the process limits. They are server configuration,
+never tool parameters.
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `QUARTO_MCP_RENDER_TIMEOUT_MS` | `120000` | Stop a Quarto run after this time. |
+| `QUARTO_MCP_MAX_OUTPUT_BYTES` | `1048576` | Cap `stdout` and `stderr` per run. |
+| `QUARTO_MCP_MAX_PROJECT_BYTES` | `268435456` | Temporary storage budget. |
+| `QUARTO_MCP_LOG_LEVEL` | `info` | Pino log level. Logs go to stderr. |
+
 ## Status
 
 Version 0.1 is in development.
