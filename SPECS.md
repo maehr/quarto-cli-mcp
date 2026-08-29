@@ -1,4 +1,4 @@
-# Quarto MCP — v0.1
+# Quarto MCP — v0.2
 
 ## Goal
 
@@ -8,6 +8,7 @@ The MCP must:
 
 * create a temporary Quarto project,
 * write initial project files,
+* remember one set of metadata defaults,
 * render the project,
 * inspect the project.
 
@@ -24,6 +25,8 @@ Expose only these tools:
 * `quarto_create_project`
 * `quarto_render`
 * `quarto_inspect`
+* `quarto_defaults_get`
+* `quarto_defaults_set`
 
 ---
 
@@ -33,6 +36,8 @@ Expose only these tools:
 type CreateProjectInput = {
   type?: string; // default: "default"
   config?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  useDefaults?: boolean; // default: true
   files?: Array<{
     path: string;
     content: string;
@@ -46,8 +51,9 @@ type CreateProjectResult = {
 
 ### Process
 
-1. Create a temporary directory.
-2. Run:
+1. Resolve the metadata. See "Metadata Defaults".
+2. Create a temporary directory.
+3. Run:
 
 ```text
 quarto create project <type> . --no-open --no-prompt
@@ -55,9 +61,10 @@ quarto create project <type> . --no-open --no-prompt
 
 Verified on Quarto 1.10.18: `.` creates the project in the current directory.
 
-3. If `config` exists, replace `_quarto.yml` with its YAML form.
-4. Write `files`.
-5. Return `projectId`.
+4. If `config` exists, replace `_quarto.yml` with its YAML form.
+5. If the resolved metadata has one key or more, write `_metadata.yml` with its YAML form.
+6. Write `files`.
+7. Return `projectId`.
 
 ### Rules
 
@@ -66,7 +73,11 @@ Verified on Quarto 1.10.18: `.` creates the project in the current directory.
 * Do not define a Quarto configuration schema.
 * Do not merge `config` with generated Quarto configuration.
 * If `config` is absent, keep the generated `_quarto.yml`.
-* Reject `_quarto.yml` in `files`.
+* `metadata` is generic YAML data.
+* Do not merge `metadata` with `config`. Quarto merges the two files.
+* Reject `_quarto.yml` in `files`. This rule applies to the project root only.
+* Reject `_metadata.yml` in `files`. This rule applies to the project root only.
+* A nested path such as `chapters/_metadata.yml` stays legal.
 * `files` contains UTF-8 text files only.
 * All file paths are relative to the project root.
 * Reject absolute paths and paths outside the project root.
@@ -156,6 +167,97 @@ quarto inspect [input]
 
 ---
 
+## `quarto_defaults_get`
+
+```ts
+type DefaultsGetInput = Record<string, never>;
+
+type DefaultsResult = {
+  path: string;
+  metadata: Record<string, unknown>;
+};
+```
+
+### Rules
+
+* Read the defaults file. See "Metadata Defaults".
+* Return an empty `metadata` when the file is absent. An absent file is not an error.
+* Return `path`, because the user needs the path to edit the file.
+* `path` is the only absolute path that the MCP returns. Project roots stay private.
+
+---
+
+## `quarto_defaults_set`
+
+```ts
+type DefaultsSetInput = {
+  metadata: Record<string, unknown>;
+};
+
+type DefaultsSetResult = DefaultsResult;
+```
+
+### Rules
+
+* `metadata` is generic YAML data.
+* Replace the whole file. Do not merge the new value with the stored value.
+* Create the parent directory when it is absent.
+* To clear the defaults, send `metadata: {}`.
+* Serialize concurrent writes to the file.
+* Return the stored value and the file path.
+
+---
+
+## Metadata Defaults
+
+The MCP stores one set of Quarto metadata on disk.
+
+The defaults file holds the exact YAML that the MCP writes into a new project. The file has no wrapper
+and no version key. The user can read and edit the file without a translation step.
+
+The MCP stores one set only. It does not support named profiles.
+
+### File Path
+
+Resolve the path in this order. The first match wins.
+
+1. `QUARTO_MCP_DEFAULTS_FILE`
+2. `$XDG_CONFIG_HOME/quarto-cli-mcp/defaults.yml`
+3. `~/.config/quarto-cli-mcp/defaults.yml`
+
+The path is server configuration. It is not an MCP tool parameter.
+
+### Resolution
+
+`quarto_create_project` resolves the metadata in this order:
+
+1. If `metadata` is present, use `metadata`.
+2. If `metadata` is absent and `useDefaults` is not `false`, use the stored defaults.
+3. In all other conditions, use nothing.
+
+### Rules
+
+* The file contains one YAML mapping.
+* Treat an empty file as an empty mapping.
+* Return a tool error when the file holds invalid YAML.
+* Return a tool error when the file holds a scalar or a sequence.
+* Caution: resolve the metadata before you create the temporary directory. A malformed file must
+  not leave a temporary directory on disk.
+* Do not create a project without the metadata when the file is malformed.
+
+### Precedence
+
+Quarto applies metadata in this order: `_quarto.yml`, then `_metadata.yml`, then document YAML.
+
+The MCP writes the resolved metadata to `_metadata.yml`. Quarto merges the two files.
+
+The MCP does not merge YAML.
+
+Caution: a key in `_metadata.yml` overrides the same key in `_quarto.yml`. An `author` key in
+`config` has no effect on a document when the defaults also set `author`.
+
+---
+
 ## Project State
 
 ```ts
@@ -222,7 +324,7 @@ Document code execution is disabled by default.
 
 Quarto configuration can run other programs, for example through render hooks or filters.
 
-Version 0.1 assumes trusted project input.
+Version 0.2 assumes trusted project input.
 
 Use an OS or container sandbox when project input is untrusted.
 
@@ -252,7 +354,9 @@ Return an MCP tool error for:
 * invalid paths,
 * invalid arguments,
 * failed process startup,
-* invalid inspect JSON.
+* invalid inspect JSON,
+* an unreadable defaults file,
+* a defaults file that does not hold one YAML mapping.
 
 For `quarto_render`, also return the defined `RenderResult` when Quarto starts but exits with a non-zero status.
 
@@ -260,7 +364,7 @@ For `quarto_render`, also return the defined `RenderResult` when Quarto starts b
 
 ## Out of Scope
 
-Do not expose these commands in v0.1:
+Do not expose these commands in v0.2:
 
 * `preview`
 * `serve`
@@ -278,6 +382,10 @@ Do not add Quarto configuration schemas.
 
 Do not implement Quarto configuration behavior.
 
+Do not merge YAML in the MCP. Quarto merges configuration files.
+
+Do not add named metadata profiles.
+
 ---
 
 ## Architecture
@@ -286,6 +394,7 @@ Do not implement Quarto configuration behavior.
 MCP
 ├── temporary project lifecycle
 ├── project registry
+├── metadata defaults file
 ├── file writes
 ├── YAML serialization
 ├── path validation
@@ -294,6 +403,7 @@ MCP
 
 Quarto
 ├── configuration
+├── metadata merge and precedence
 ├── formats
 ├── render behavior
 └── inspect behavior

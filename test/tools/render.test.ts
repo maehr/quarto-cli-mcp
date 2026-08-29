@@ -3,6 +3,7 @@ import { parseServerConfig } from '../../src/core/config.ts';
 import { createRegistry, type ProjectState, type Registry } from '../../src/shell/registry.ts';
 import { createProject } from '../../src/tools/create.ts';
 import { render } from '../../src/tools/render.ts';
+import { cleanupDefaults, tempDefaultsStore } from '../support/defaults.ts';
 import { hasQuarto } from '../support/quarto.ts';
 
 const config = (() => {
@@ -14,6 +15,7 @@ const config = (() => {
 const registries: Registry[] = [];
 afterEach(async () => {
 	await Promise.all(registries.splice(0).map((r) => r.shutdown()));
+	cleanupDefaults();
 });
 
 const project = async (content: string): Promise<{ project: ProjectState }> => {
@@ -21,7 +23,7 @@ const project = async (content: string): Promise<{ project: ProjectState }> => {
 	registries.push(registry);
 	const { projectId } = await createProject(
 		{ type: 'default', files: [{ path: 'hello.qmd', content }] },
-		{ registry, config },
+		{ registry, config, defaults: tempDefaultsStore() },
 	);
 	return { project: registry.get(projectId) };
 };
