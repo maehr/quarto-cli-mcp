@@ -53,6 +53,8 @@ type CreateProjectResult = {
 quarto create project <type> . --no-open --no-prompt
 ```
 
+Verified on Quarto 1.10.18: `.` creates the project in the current directory.
+
 3. If `config` exists, replace `_quarto.yml` with its YAML form.
 4. Write `files`.
 5. Return `projectId`.
@@ -60,6 +62,7 @@ quarto create project <type> . --no-open --no-prompt
 ### Rules
 
 * `config` is generic YAML data.
+* Reject a `type` that Quarto would read as an option.
 * Do not define a Quarto configuration schema.
 * Do not merge `config` with generated Quarto configuration.
 * If `config` is absent, keep the generated `_quarto.yml`.
@@ -104,7 +107,7 @@ quarto render [input]
 ### Rules
 
 * If `input` is absent, render the project.
-* Keep `to` as a string.
+* Keep `to` as a string. Reject a value that Quarto would read as an option.
 * Use `--no-execute` by default.
 * Use `--execute` only when `execute: true`.
 * Put Quarto options in `_quarto.yml`, `_metadata.yml`, or document YAML.
@@ -114,6 +117,9 @@ quarto render [input]
 * Reject option-like path values.
 * Reject `output: "-"`.
 * `files` contains files created or modified by this render.
+* Exclude paths under `.quarto/`. Quarto uses that directory for its own cache and
+  cross-reference index.
+* Do not report deleted files. A client cannot read a file that no longer exists.
 * Return file paths relative to the project root.
 * Determine `mimeType` only when possible.
 * Set `success: false` when Quarto exits with a non-zero status.
