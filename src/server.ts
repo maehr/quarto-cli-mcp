@@ -1,7 +1,14 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServerConfig } from './core/config.ts';
+import type { DefaultsStore } from './shell/defaults.ts';
 import type { Registry } from './shell/registry.ts';
 import { createProject, createProjectInputSchema } from './tools/create.ts';
+import {
+	defaultsGetInputSchema,
+	defaultsSetInputSchema,
+	getDefaults,
+	setDefaults,
+} from './tools/defaults.ts';
 import { inspect, inspectInputSchema } from './tools/inspect.ts';
 import { render, renderInputSchema } from './tools/render.ts';
 
@@ -16,6 +23,7 @@ const asContent = (value: unknown) => ({
 export const createServer = (deps: {
 	readonly registry: Registry;
 	readonly config: ServerConfig;
+	readonly defaults: DefaultsStore;
 }): McpServer => {
 	const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
 
@@ -64,6 +72,30 @@ export const createServer = (deps: {
 					inspect({ projectId, ...rest }, { project, config: deps.config }),
 				),
 			),
+	);
+
+	server.registerTool(
+		'quarto_defaults_get',
+		{
+			title: 'Read the stored metadata defaults',
+			description:
+				'Return the Quarto metadata that every new project receives as _metadata.yml, and the ' +
+				'path of the file that holds it. An absent file returns empty metadata.',
+			inputSchema: defaultsGetInputSchema.shape,
+		},
+		async () => asContent(await getDefaults(deps)),
+	);
+
+	server.registerTool(
+		'quarto_defaults_set',
+		{
+			title: 'Store the metadata defaults',
+			description:
+				'Store Quarto metadata, such as author, affiliation, and ORCID, for every new project. ' +
+				'The call replaces the whole file. Send empty metadata to clear the defaults.',
+			inputSchema: defaultsSetInputSchema.shape,
+		},
+		async (input) => asContent(await setDefaults(input, deps)),
 	);
 
 	return server;

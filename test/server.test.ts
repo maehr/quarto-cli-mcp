@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { parseServerConfig } from '../src/core/config.ts';
 import { createServer } from '../src/server.ts';
 import { createRegistry, type Registry } from '../src/shell/registry.ts';
+import { cleanupDefaults, tempDefaultsStore } from './support/defaults.ts';
 import { hasQuarto } from './support/quarto.ts';
 
 const config = (() => {
@@ -15,16 +16,18 @@ const config = (() => {
 const registries: Registry[] = [];
 afterEach(async () => {
 	await Promise.all(registries.splice(0).map((r) => r.shutdown()));
+	cleanupDefaults();
 });
 
 const connect = async () => {
 	const registry = createRegistry();
 	registries.push(registry);
-	const server = createServer({ registry, config });
+	const defaults = tempDefaultsStore();
+	const server = createServer({ registry, config, defaults });
 	const client = new Client({ name: 'test', version: '0.0.0' });
 	const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 	await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
-	return { client, registry };
+	return { client, registry, defaults };
 };
 
 /** Tool results arrive as a text content block holding JSON. */
@@ -36,12 +39,14 @@ const payload = (result: unknown): Record<string, unknown> => {
 };
 
 describe('createServer', () => {
-	it('exposes exactly the three tools in SPECS.md', async () => {
+	it('exposes exactly the five tools in SPECS.md', async () => {
 		const { client } = await connect();
 		const { tools } = await client.listTools();
 
 		expect(tools.map((t) => t.name).sort()).toEqual([
 			'quarto_create_project',
+			'quarto_defaults_get',
+			'quarto_defaults_set',
 			'quarto_inspect',
 			'quarto_render',
 		]);
@@ -55,6 +60,12 @@ describe('createServer', () => {
 		for (const forbidden of ['preview', 'serve', 'publish', 'install', 'pandoc', 'typst', 'run']) {
 			expect(names).not.toContain(forbidden);
 		}
+	});
+
+	it('returns empty metadata before anything is stored', async () => {
+		const { client, defaults } = await connect();
+		const result = payload(await client.callTool({ name: 'quarto_defaults_get', arguments: {} }));
+		expect(result).toEqual({ path: defaults.path(), metadata: {} });
 	});
 
 	it('reports an unknown projectId as a tool error', async () => {
@@ -125,6 +136,31 @@ describe.skipIf(!hasQuarto)('createServer end to end', () => {
 			arguments: { projectId: created.projectId as string, input: '../escape.qmd' },
 		});
 		expect(result.isError).toBe(true);
+	});
+
+	it('remembers the metadata defaults and applies them to a new project', async () => {
+		const { client } = await connect();
+		const metadata = { author: [{ name: 'Ada Lovelace', orcid: '0000-0002-1825-0097' }] };
+
+		const stored = payload(
+			await client.callTool({ name: 'quarto_defaults_set', arguments: { metadata } }),
+		);
+		expect(stored.metadata).toEqual(metadata);
+
+		const read = payload(await client.callTool({ name: 'quarto_defaults_get', arguments: {} }));
+		expect(read.metadata).toEqual(metadata);
+
+		const created = payload(
+			await client.callTool({ name: 'quarto_create_project', arguments: { type: 'default' } }),
+		);
+		const inspected = payload(
+			await client.callTool({
+				name: 'quarto_inspect',
+				arguments: { projectId: created.projectId as string, input: 'default.qmd' },
+			}),
+		);
+		// Quarto merges _metadata.yml itself, so the author reaches the document metadata.
+		expect(JSON.stringify(inspected)).toContain('Ada Lovelace');
 	});
 
 	it('removes every temporary directory on shutdown', async () => {

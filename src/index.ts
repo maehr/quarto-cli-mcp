@@ -1,8 +1,11 @@
 #!/usr/bin/env node
+import os from 'node:os';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import pino from 'pino';
 import { parseServerConfig } from './core/config.ts';
+import { resolveDefaultsPath } from './core/defaults.ts';
 import { createServer } from './server.ts';
+import { createDefaultsStore } from './shell/defaults.ts';
 import { createRegistry } from './shell/registry.ts';
 
 // Stdout carries the MCP protocol, so every log line goes to stderr.
@@ -17,7 +20,9 @@ const main = async (): Promise<void> => {
 	}
 
 	const registry = createRegistry();
-	const server = createServer({ registry, config: config.value });
+	const defaultsPath = resolveDefaultsPath(process.env, os.homedir());
+	const defaults = createDefaultsStore(defaultsPath);
+	const server = createServer({ registry, config: config.value, defaults });
 
 	let shuttingDown = false;
 	const shutdown = async (reason: string): Promise<void> => {
@@ -37,7 +42,7 @@ const main = async (): Promise<void> => {
 	}
 
 	await server.connect(new StdioServerTransport());
-	logger.info({ limits: config.value }, 'Quarto MCP server ready on stdio.');
+	logger.info({ limits: config.value, defaultsPath }, 'Quarto MCP server ready on stdio.');
 };
 
 main().catch((cause: unknown) => {

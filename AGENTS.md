@@ -2,7 +2,8 @@
 
 This repository is a thin MCP server that wraps the Quarto CLI.
 
-It exposes three tools: `quarto_create_project`, `quarto_render`, and `quarto_inspect`.
+It exposes five tools: `quarto_create_project`, `quarto_render`, `quarto_inspect`,
+`quarto_defaults_get`, and `quarto_defaults_set`.
 
 Quarto stays the source of truth for configuration, formats, render behavior, and inspect output.
 
@@ -51,7 +52,7 @@ exist until you build.
 | `src/core/` | Pure functions. No I/O. 100% coverage required. |
 | `src/shell/` | Side effects only. Process, filesystem, and registry access. |
 | `src/tools/` | Zod input schemas and tool handlers. Wires core to shell. |
-| `src/server.ts` | Registers the three tools on one `McpServer`. |
+| `src/server.ts` | Registers the five tools on one `McpServer`. |
 | `src/index.ts` | Binary entry point. Connects the stdio transport. |
 
 ### Server Rules
@@ -63,6 +64,9 @@ Do not accept an executable path from the client.
 Send all logs to stderr. Stdout carries the MCP protocol.
 
 Keep project roots private. Clients use only `projectId`.
+
+The defaults file path is the one absolute path that a tool returns. A user needs it to edit
+the file.
 
 Validate every client path against the project root.
 

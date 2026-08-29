@@ -28,7 +28,7 @@ export const describePathError = (error: PathError): string => {
 /**
  * Resolve a client path against the project root.
  *
- * The check is lexical. It does not follow symbolic links inside the project. Version 0.1
+ * The check is lexical. It does not follow symbolic links inside the project. Version 0.2
  * assumes trusted project input, so a symbolic link that a client wrote is out of scope.
  *
  * @returns the absolute resolved path, when the path is inside the root.
