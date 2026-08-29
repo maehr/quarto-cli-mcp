@@ -16,9 +16,12 @@ Use Node.js LTS and ESM.
 
 Pin versions in `package.json`. Commit `pnpm-lock.yaml`. Do not ship development tools to runtime.
 
-## 0. This Repository
+## 1. This Repository
 
-### Prerequisite
+### Prerequisites
+
+Use Node.js 24. `.nvmrc` pins that version. `package.json` requires Node.js 22 or later, and CI
+runs the tests on 22 and 24.
 
 The `quarto` executable must be on `PATH`. Tests that call Quarto skip when it is absent.
 
@@ -26,14 +29,20 @@ The `quarto` executable must be on `PATH`. Tests that call Quarto skip when it i
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm install` | Install dependencies. |
+| `pnpm install` | Install dependencies and the Git hooks. |
 | `pnpm lint` | Run Biome. |
+| `pnpm format` | Apply Biome fixes and formatting. |
 | `pnpm typecheck` | Run the TypeScript compiler. |
 | `pnpm test` | Run Vitest with coverage. |
-| `pnpm check` | Run all three gate steps. |
-| `pnpm start` | Start the stdio MCP server. |
+| `pnpm check` | Run lint, typecheck, and test. |
+| `pnpm build` | Compile `src/` to `dist/`. |
+| `pnpm start` | Start the stdio MCP server from `dist/`. |
+| `pnpm changelog` | Generate `CHANGELOG.md` with git-cliff. |
 
 Run `pnpm check` after a change batch. Run it again before a push.
+
+Run `pnpm build` before `pnpm start`. The start script runs `dist/index.js`, which does not
+exist until you build.
 
 ### Source Layout
 
@@ -57,7 +66,7 @@ Keep project roots private. Clients use only `projectId`.
 
 Validate every client path against the project root.
 
-## 1. Orchestration
+## 2. Orchestration
 
 Context is limited. Use it carefully.
 
@@ -79,7 +88,7 @@ Context is limited. Use it carefully.
 
 **Read narrowly.** Read only the required file sections. Do not re-read files you just wrote.
 
-## 2. Tooling
+## 3. Tooling
 
 ### Platform
 
@@ -113,7 +122,7 @@ Prefer built-in APIs.
 
 Do not add `Effect`, `fp-ts`, DI containers, ORMs, or similar frameworks by default.
 
-## 3. Standards
+## 4. Standards
 
 * [SemVer 2.0.0](https://semver.org/)
 * [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)
@@ -123,7 +132,7 @@ Do not add `Effect`, `fp-ts`, DI containers, ORMs, or similar frameworks by defa
 
 Generate `CHANGELOG.md` with git-cliff. Do not edit it by hand.
 
-## 4. Code
+## 5. Code
 
 Use these rules:
 
@@ -200,7 +209,7 @@ Run the gate before push.
 
 Run `commitlint` on commit messages.
 
-## 5. GitHub Workflow
+## 6. GitHub Workflow
 
 Do not push directly to `main`. Trunk protection rejects such a push.
 
@@ -217,8 +226,6 @@ Use one logical change per pull request.
 Use Conventional Commits for commit messages and pull request titles.
 
 Write `Closes #<n>` in the pull request body. This closes the issue on merge.
-
-Merge with a squash merge. Delete the branch after the merge.
 
 ### Trunk Protection
 
@@ -239,25 +246,40 @@ gh api -X PUT \
   --input protection.json
 ```
 
-Require:
+This repository runs these rules on `main`:
 
-* pull requests
-* appropriate approval rules
-* stale approval dismissal
-* code-owner approval when required
-* last-push approval when required
-* conversation resolution
-* strict status checks
-* linear history
-* `enforce_admins: true`
-* no force push
-* no branch deletion
+| Rule | Value |
+| --- | --- |
+| Required status check | `quality-gate`, strict |
+| Required approvals | 0 |
+| Stale approval dismissal | on |
+| Code-owner approval | on |
+| Last-push approval | **off** |
+| Conversation resolution | on |
+| Linear history | on |
+| Required signatures | on |
+| `enforce_admins` | on |
+| Force push | blocked |
+| Branch deletion | blocked |
 
-For a solo maintainer, require zero approvals when admin enforcement is active.
+Last-push approval is off for a reason. GitHub does not let an author approve their own pull
+request. With one maintainer, that rule blocks every merge, and `gh pr merge --admin` does not
+override it. Turn it on again only when a second maintainer joins.
 
 Use a repository ruleset when classic branch protection is unavailable.
 
-## 6. CI/CD Security
+### Merging
+
+Merge with a squash merge. Delete the branch after the merge.
+
+```bash
+gh pr merge <number> --squash --delete-branch
+```
+
+Wait for `quality-gate` to pass first. That check is one job that depends on the test matrix. A
+matrix job reports one check per combination, so its own name is not stable enough to require.
+
+## 7. CI/CD Security
 
 Use these defaults:
 
@@ -293,7 +315,7 @@ Branch protection requires the `quality-gate` check. That check is a single job 
 the test matrix, because a matrix job reports one check per combination and its name is not
 stable.
 
-## 7. Security Model
+## 8. Security Model
 
 Document code execution is off by default. `--no-execute` is not a sandbox.
 

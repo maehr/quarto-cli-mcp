@@ -1,5 +1,5 @@
 # Default owner for everything in this repository.
 * @maehr
 
-# Workflow changes need explicit review. See AGENTS.md section 6.
+# Workflow changes need explicit review. See AGENTS.md section 7.
 /.github/workflows/** @maehr
