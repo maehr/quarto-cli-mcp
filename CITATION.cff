@@ -7,6 +7,7 @@ authors:
     family-names: Mähr
     email: moritz.maehr@gmail.com
     orcid: 'https://orcid.org/0000-0002-1367-1618'
+    affiliation: University of Bern; ETH Zurich
 repository-code: 'https://github.com/maehr/quarto-cli-mcp'
 abstract: A thin Model Context Protocol server that wraps the Quarto CLI.
 keywords:
