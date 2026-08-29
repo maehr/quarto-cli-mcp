@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a change to the server.
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This server stays thin. Quarto owns configuration, formats, and render behavior.
+        Read the "Out of Scope" section of `SPECS.md` before you open this request.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: Describe the problem, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: The proposal
+      description: Describe the change you want.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: This does not copy Quarto configuration logic into the server.
+          required: true

@@ -1,0 +1,8 @@
+# The `prepare` script installs the Git hooks. The package postinstall is not needed.
+allowBuilds:
+  simple-git-hooks: false
+
+# These versions are newer than the default minimum release age. They are reviewed and pinned.
+minimumReleaseAgeExclude:
+  - simple-git-hooks@2.14.0
+  - zod@4.5.2
