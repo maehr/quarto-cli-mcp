@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to this project are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [Unreleased]
+## [0.2.0] - 2026-08-30
 
 ### Added
 
@@ -10,10 +10,18 @@ All notable changes to this project are documented in this file. The format is b
 - Add quarto_render (#14)
 - Add quarto_inspect (#12)
 - Add the MCP server and the stdio entry point (#13)
+- Remember project metadata defaults (#20)
 
 ### Documentation
 
 - Add specification and agent instructions
+- Make AGENTS.md match the repository (#18)
+- Document the merge rules and limits of the metadata defaults (#27)
+
+### Fixed
+
+- Read the server version from package.json (#25)
+- Remove temporary projects when the client closes the pipe (#26)
 
 ### Misc
 

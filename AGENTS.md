@@ -283,6 +283,36 @@ gh pr merge <number> --squash --delete-branch
 Wait for `quality-gate` to pass first. That check is one job that depends on the test matrix. A
 matrix job reports one check per combination, so its own name is not stable enough to require.
 
+### Releasing
+
+The package is `quarto-cli-mcp` on npm. A `v*` tag starts `.github/workflows/release.yml`.
+
+`package.json` is the one source for the version. `src/server.ts` reads it, and a test asserts that
+`CITATION.cff` holds the same value.
+
+Do the release in this order.
+
+1. Open a preparation pull request. Set the new version in `package.json` and in `CITATION.cff`.
+2. Generate the changelog with `pnpm exec git-cliff --tag v<version> -o CHANGELOG.md`. Do not edit
+   that file by hand.
+3. Merge the pull request.
+4. Sign the tag and push it.
+
+```bash
+git switch main && git pull
+git tag -s v<version> -m "v<version>"
+git push origin v<version>
+```
+
+The workflow then runs the quality gate, publishes to npm, and creates the GitHub release. Zenodo
+watches the release and archives it under a DOI.
+
+Sign the tag. `main` requires signatures.
+
+The workflow stops when the tag disagrees with `package.json`.
+
+npm publishes through OIDC trusted publishing. Do not store an npm token.
+
 ## 7. CI/CD Security
 
 Use these defaults:

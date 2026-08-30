@@ -1,7 +1,7 @@
 {
 	"name": "quarto-cli-mcp",
-	"version": "0.1.0",
-	"private": true,
+	"version": "0.2.0",
+	"private": false,
 	"type": "module",
 	"description": "A thin MCP server that wraps the Quarto CLI.",
 	"license": "AGPL-3.0-only",
