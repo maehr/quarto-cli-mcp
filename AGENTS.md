@@ -313,6 +313,13 @@ The workflow stops when the tag disagrees with `package.json`.
 
 npm publishes through OIDC trusted publishing. Do not store an npm token.
 
+npm accepts a trusted publisher on an existing package only. The first publish of a new package
+name therefore happens by hand. Configure the trusted publisher after that publish, on
+`npmjs.com/package/<name>/access`.
+
+The publish job skips a version that the registry already holds. A release is therefore safe to
+run again.
+
 ## 7. CI/CD Security
 
 Use these defaults:
