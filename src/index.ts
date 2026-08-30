@@ -41,6 +41,15 @@ const main = async (): Promise<void> => {
 		});
 	}
 
+	// An MCP client stops a stdio server by closing the pipe, not by a signal. The stdio transport
+	// listens for `data` and for `error` only, so nothing else reports that end. Without this
+	// handler the process exits on its own and leaves every temporary project on disk.
+	//
+	// The pending removals hold the event loop open, so the cleanup finishes before the exit.
+	process.stdin.on('end', () => {
+		void shutdown('stdin-end');
+	});
+
 	await server.connect(new StdioServerTransport());
 	logger.info({ limits: config.value, defaultsPath }, 'Quarto MCP server ready on stdio.');
 };
