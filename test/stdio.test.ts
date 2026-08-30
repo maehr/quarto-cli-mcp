@@ -34,7 +34,11 @@ const waitForEmpty = async (tmp: string, timeoutMs = 10_000): Promise<void> => {
 };
 
 /** Start the server over a real pipe, and leave one temporary project behind. */
-const startServer = async (): Promise<{ tmp: string; transport: StdioClientTransport }> => {
+const startServer = async (): Promise<{
+	tmp: string;
+	transport: StdioClientTransport;
+	reason: () => string;
+}> => {
 	const tmp = mkdtempSync(path.join(os.tmpdir(), 'quarto-mcp-stdio-'));
 	dirs.push(tmp);
 
@@ -48,35 +52,41 @@ const startServer = async (): Promise<{ tmp: string; transport: StdioClientTrans
 			TMPDIR: tmp,
 			// Caution: no test may read the real `~/.config`.
 			QUARTO_MCP_DEFAULTS_FILE: path.join(tmp, 'defaults.yml'),
-			QUARTO_MCP_LOG_LEVEL: 'silent',
+			QUARTO_MCP_LOG_LEVEL: 'info',
 		},
-		stderr: 'ignore',
+		// The server logs its shutdown reason to stderr. The tests read that reason.
+		stderr: 'pipe',
 	});
 	transports.push(transport);
 
 	const client = new Client({ name: 'test', version: '0.0.0' });
 	await client.connect(transport);
+
+	let log = '';
+	transport.stderr?.on('data', (chunk: Buffer) => {
+		log += chunk.toString('utf8');
+	});
+
 	await client.callTool({ name: 'quarto_create_project', arguments: {} });
 	expect(projects(tmp)).toHaveLength(1);
 
-	return { tmp, transport };
+	return { tmp, transport, reason: () => log };
 };
 
 describe.skipIf(!hasQuarto)('the stdio server', () => {
 	it('removes temporary projects when the client closes the pipe', async () => {
-		const { tmp, transport } = await startServer();
+		const { tmp, transport, reason } = await startServer();
 
-		const startedAt = Date.now();
 		await transport.close();
 
 		expect(projects(tmp)).toEqual([]);
-		// The client sends SIGTERM only after it waits 2000 ms. A faster exit proves that the end
-		// of stdin removed the project, and not the signal.
-		expect(Date.now() - startedAt).toBeLessThan(2000);
+		// The client sends SIGTERM only after it waits 2000 ms. The logged reason proves that the
+		// end of stdin removed the project, and not the signal.
+		expect(reason()).toContain('stdin-end');
 	});
 
 	it('removes temporary projects on SIGTERM', async () => {
-		const { tmp, transport } = await startServer();
+		const { tmp, transport, reason } = await startServer();
 		const { pid } = transport;
 		expect(pid).not.toBeNull();
 
@@ -84,5 +94,6 @@ describe.skipIf(!hasQuarto)('the stdio server', () => {
 		await waitForEmpty(tmp);
 
 		expect(projects(tmp)).toEqual([]);
+		expect(reason()).toContain('SIGTERM');
 	});
 });

@@ -91,6 +91,21 @@ To use other metadata for one project, pass `metadata` to `quarto_create_project
 replaces the defaults. To skip the defaults, pass `useDefaults: false`. To clear the defaults,
 call `quarto_defaults_set` with an empty `metadata` object.
 
+#### Know these three limits
+
+Quarto owns the merge. The server writes one file and changes nothing else.
+
+1. Keep `format` out of the defaults. A `format` key in the defaults drops the formats of the
+   project. A project that asks for `pdf` then renders `html` only.
+2. An author in the defaults is additive. A project that names one other author still carries the
+   author from the defaults. To get one author list, set `useDefaults: false`, or pass an explicit
+   `metadata`. An `author` key in a document front matter does replace the inherited list, but the
+   `authors` spelling does not.
+3. The defaults reach the project root only. A document in `chapters/` gets nothing from them. This
+   limits their value for a book or for a manuscript.
+
+Read the [Limits section of `SPECS.md`](SPECS.md#limits) for the measured table.
+
 ### Server limits
 
 Set these environment variables to change the process limits. They are server configuration,
