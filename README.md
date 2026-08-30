@@ -24,13 +24,6 @@ Read [`SPECS.md`](SPECS.md) for the full contract.
 - Node.js 22 or later
 - [Quarto](https://quarto.org/docs/get-started/) on `PATH`
 
-## Install
-
-```bash
-pnpm install
-pnpm run build
-```
-
 ## Use
 
 The server speaks MCP over stdio. Add it to a client configuration:
@@ -39,12 +32,23 @@ The server speaks MCP over stdio. Add it to a client configuration:
 {
   "mcpServers": {
     "quarto": {
-      "command": "node",
-      "args": ["/absolute/path/to/quarto-cli-mcp/dist/index.js"]
+      "command": "npx",
+      "args": ["-y", "quarto-cli-mcp"]
     }
   }
 }
 ```
+
+To pin a version, write `quarto-cli-mcp@0.2.0`.
+
+## Develop
+
+```bash
+pnpm install
+pnpm run build
+```
+
+Run the server from the clone with `node /absolute/path/to/quarto-cli-mcp/dist/index.js`.
 
 A `projectId` is valid only while the server process runs. The server removes every temporary
 project when it stops.
@@ -125,7 +129,7 @@ The server resolves the defaults file in this order. The first match wins:
 
 ## Status
 
-Version 0.2 is in development.
+Version 0.2.0 is released. Read [`CHANGELOG.md`](CHANGELOG.md) for the history.
 
 ## Security
 
