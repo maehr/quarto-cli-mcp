@@ -253,8 +253,68 @@ The MCP writes the resolved metadata to `_metadata.yml`. Quarto merges the two f
 
 The MCP does not merge YAML.
 
-Caution: a key in `_metadata.yml` overrides the same key in `_quarto.yml`. An `author` key in
-`config` has no effect on a document when the defaults also set `author`.
+A scalar key follows that order. A higher level replaces the value of a lower level. A mapping
+merges key by key. A sequence does not follow that order. Read "Limits".
+
+| Case | Defaults | Project config | Document | Result |
+| --- | --- | --- | --- | --- |
+| Scalar | `lang: en` | `lang: de` | — | `en` |
+| Scalar | `lang: en` | `lang: de` | `lang: fr` | `fr` |
+| Nested mapping | `execute.echo` | `execute.warning` | — | both keys |
+| One format | `format.html.toc` | `format.html.theme` | — | both keys |
+| Sibling format | `format.html` | `format.pdf` | — | `html` only |
+| Author, entries differ | one `author` | one other `author` | — | two authors |
+| Author, entries identical | one `author` | the same `author` | — | one author |
+| Author in the document | one `author` | one other `author` | one other `author` | the document author only |
+| `authors` in the document | one `author` | — | one `authors` | two authors |
+| Subdirectory | one `author` | — | — | the project root only |
+
+Measured on Quarto 1.10.18. `test/tools/metadata-merge.test.ts` holds one test for each row. A
+Quarto upgrade that changes a rule fails the build.
+
+### Limits
+
+Quarto owns these rules. The MCP cannot change them. Read the two traps first.
+
+#### Trap 1 — a `format` key in the defaults drops the project format
+
+The keys inside one format merge. The format list does not merge. The higher level wins the list.
+
+A project config asks for `pdf`. The defaults hold `format: {html: ...}`. Quarto then renders `html`
+only. The `pdf` format and its options disappear.
+
+Keep `format` out of the defaults. Set the format in each project.
+
+#### Trap 2 — an author in the defaults is additive
+
+Quarto joins the `author` sequence of `_quarto.yml` and of `_metadata.yml`. It then removes an entry
+that is identical to another entry. It does not replace the sequence.
+
+A project config that names one other author still carries the author from the defaults. Both names
+reach the rendered page.
+
+A document behaves differently. An `author` key in the document front matter replaces the whole
+inherited list. Only the author of the document reaches the rendered page.
+
+Caution: `quarto inspect` reports the joined list for that case. The render then narrows the list.
+Trust the rendered page.
+
+Caution: `authors` is a different key from `author`. An `authors` key in a document does not replace
+the inherited `author`. Both names reach the rendered page.
+
+Set `useDefaults: false`, or pass an explicit `metadata`, when a project needs its own author list.
+
+#### Limit — the defaults do not reach a subdirectory
+
+The root `_metadata.yml` applies to documents in the project root only. A document in `chapters/`
+gets nothing from it.
+
+This limit reduces the value of the defaults for a book or for a manuscript. Those project types
+keep their content in subdirectories.
+
+A nested `chapters/_metadata.yml` applies to its own subtree. Pass such a file through `files`.
+
+The MCP must not work around this limit. This document forbids a YAML merge in the MCP.
 
 ---
 
