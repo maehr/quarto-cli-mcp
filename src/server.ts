@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServerConfig } from './core/config.ts';
 import type { DefaultsStore } from './shell/defaults.ts';
@@ -13,7 +14,17 @@ import { inspect, inspectInputSchema } from './tools/inspect.ts';
 import { render, renderInputSchema } from './tools/render.ts';
 
 export const SERVER_NAME = 'quarto-cli-mcp';
-export const SERVER_VERSION = '0.1.0';
+
+/**
+ * `package.json` is the one source for the version. The relative path resolves from `src/` and
+ * from `dist/`, because npm ships `package.json` in every tarball.
+ *
+ * A JSON import would need `resolveJsonModule`, and `package.json` sits outside the `rootDir` of
+ * `tsconfig.build.json`, so the build would fail.
+ */
+const pkg = createRequire(import.meta.url)('../package.json') as { readonly version: string };
+
+export const SERVER_VERSION = pkg.version;
 
 /** Every tool returns JSON. The MCP content block carries it as text. */
 const asContent = (value: unknown) => ({
