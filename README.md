@@ -1,6 +1,12 @@
 # Quarto MCP
 
-[![npm](https://img.shields.io/npm/v/quarto-cli-mcp)](https://www.npmjs.com/package/quarto-cli-mcp)
+[![CI](https://github.com/maehr/quarto-cli-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/maehr/quarto-cli-mcp/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/maehr/quarto-cli-mcp/actions/workflows/codeql.yml/badge.svg)](https://github.com/maehr/quarto-cli-mcp/actions/workflows/codeql.yml)
+[![npm version](https://img.shields.io/npm/v/quarto-cli-mcp)](https://www.npmjs.com/package/quarto-cli-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/quarto-cli-mcp)](https://www.npmjs.com/package/quarto-cli-mcp)
+[![node-current](https://img.shields.io/node/v/quarto-cli-mcp)](https://nodejs.org/)
+[![license](https://img.shields.io/github/license/maehr/quarto-cli-mcp)](LICENSE)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-3.0-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22198691.svg)](https://doi.org/10.5281/zenodo.22198691)
 
 A thin [Model Context Protocol](https://modelcontextprotocol.io/) server that wraps the
