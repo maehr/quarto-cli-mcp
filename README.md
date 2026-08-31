@@ -1,5 +1,8 @@
 # Quarto MCP
 
+[![npm](https://img.shields.io/npm/v/quarto-cli-mcp)](https://www.npmjs.com/package/quarto-cli-mcp)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22198691.svg)](https://doi.org/10.5281/zenodo.22198691)
+
 A thin [Model Context Protocol](https://modelcontextprotocol.io/) server that wraps the
 [Quarto](https://quarto.org/) CLI.
 
