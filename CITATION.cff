@@ -16,3 +16,8 @@ keywords:
   - model-context-protocol
 license: AGPL-3.0-only
 version: 0.2.0
+doi: 10.5281/zenodo.22198691
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22198691
+    description: The concept DOI for all versions.
